@@ -1,0 +1,30 @@
+name: Validate package
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate Composer manifest
+        run: composer validate --strict
+      - name: Resolve package dependencies
+        run: composer update --no-interaction --prefer-dist
+      - name: Check PHP syntax
+        run: find src database -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Check widget JavaScript syntax
+        run: node --check resources/js/victos-check-status.js
